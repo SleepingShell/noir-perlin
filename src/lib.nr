@@ -2,14 +2,14 @@ use dep::std;
 use dep::signed::Signed;
 
 struct Coords {
-    x: u120,
-    y: u120,
+    x: u124,
+    y: u124,
 }
 
 impl Coords {
     fn diff(self, other: Self) -> Self {
-        let mut diffx: u120 = 0;
-        let mut diffy: u120 = 0;
+        let mut diffx: u124 = 0;
+        let mut diffy: u124 = 0;
         if self.x > other.x {
             diffx = self.x - other.x;
         } else {
@@ -32,14 +32,14 @@ global DENOMINATOR = 1125899906842624; //2^50
 global PERLIN_MAX = 64;
 
 // Return a psuedorandom integer in [0, 15]
-fn random(x: u120, y: u120, scale: u120, seed: Field) -> u4 {
+fn random(x: u124, y: u124, scale: u124, seed: Field) -> u4 {
     let t = std::hash::mimc_bn254([x as Field, y as Field, scale as Field, seed]);
 
     let bits = t.to_le_bits(32);
     8*(bits[3] as u4) + 4*(bits[2] as u4) + 2*(bits[1] as u4) + (bits[0] as u4)
 }
 
-fn random_gradient_at(point: Coords, scale: u120, seed: Field) -> (Signed, Signed) {
+fn random_gradient_at(point: Coords, scale: u124, seed: Field) -> (Signed, Signed) {
     let DIRECTIONS: [(Signed, Signed); 16] = [
         (Signed { x: 1000, is_neg: false }, Signed { x: 0, is_neg: false }),
         (Signed { x: 923, is_neg: false }, Signed { x: 382, is_neg: false }),
@@ -70,14 +70,14 @@ fn random_gradient_at(point: Coords, scale: u120, seed: Field) -> (Signed, Signe
     (direction.0.muli(point.x), direction.1.muli(point.y))
 }
 
-fn get_weight(corner: Coords, point: Coords, scale: u120) -> u120 {
+fn get_weight(corner: Coords, point: Coords, scale: u124) -> u124 {
     let diff = corner.diff(point);
     let res = (scale - diff.x) * (scale - diff.y);
 
     res
 }
 
-fn get_corners(point: Coords, scale: u120) -> [Coords; 4] {
+fn get_corners(point: Coords, scale: u124) -> [Coords; 4] {
     let bottom_left = Coords {
         x: (point.x / scale) * scale,
         y: (point.y / scale) * scale,
@@ -91,14 +91,14 @@ fn get_corners(point: Coords, scale: u120) -> [Coords; 4] {
     ]
 }
 
-fn single_scale_perlin(point: Coords, scale: u120, seed: Field) -> Signed {
+fn single_scale_perlin(point: Coords, scale: u124, seed: Field) -> Signed {
     let corners = get_corners(point, scale);
 
-    let mut numerator = toSigned(0);
+    let mut numerator = Signed::toSigned(0);
     for i in 0..4 {
         let corner = corners[i];
-        let offsetx = toSigned(point.x).sub(toSigned(corner.x));
-        let offsety = toSigned(point.y).sub(toSigned(corner.y));
+        let offsetx = Signed::toSigned(point.x).sub(Signed::toSigned(corner.x));
+        let offsety = Signed::toSigned(point.y).sub(Signed::toSigned(corner.y));
         let offset = Coords {
             x: offsetx.x,
             y: offsety.x,
@@ -114,18 +114,18 @@ fn single_scale_perlin(point: Coords, scale: u120, seed: Field) -> Signed {
         numerator = numerator.add(t);
     }
 
-    numerator.div(toSigned(scale * scale * scale))
+    numerator.div(Signed::toSigned(scale * scale * scale))
 }
 
-fn compute_perlin(point: Coords, scale: u120, seed: Field) -> Signed {
-    let mut perlin = toSigned(0);
+fn compute_perlin(point: Coords, scale: u124, seed: Field) -> Signed {
+    let mut perlin = Signed::toSigned(0);
 
-    perlin = perlin.add(single_scale_perlin(point, scale, seed).mul(toSigned(2)));
+    perlin = perlin.add(single_scale_perlin(point, scale, seed).mul(Signed::toSigned(2)));
     perlin = perlin.add(single_scale_perlin(point, scale*2, seed));
     perlin = perlin.add(single_scale_perlin(point, scale*4, seed));
     perlin = perlin.add(single_scale_perlin(point, scale*8, seed));
-    perlin = perlin.div(toSigned(4));
-    perlin = perlin.muli(PERLIN_MAX/2).add(toSigned(PERLIN_MAX/2));
+    perlin = perlin.div(Signed::toSigned(4));
+    perlin = perlin.muli(PERLIN_MAX/2).add(Signed::toSigned(PERLIN_MAX/2));
     perlin
 }
 
