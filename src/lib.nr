@@ -118,7 +118,7 @@ fn single_scale_perlin(point: Coords, scale: u124, seed: Field) -> Signed {
     numerator.div(Signed::toSigned(scale * scale * scale))
 }
 
-fn compute_perlin(point: Coords, scale: u124, seed: Field) -> Signed {
+fn compute_perlin(point: Coords, scale: u124, seed: Field) -> u124 {
     let mut perlin = Signed::toSigned(0);
 
     perlin = perlin.add(single_scale_perlin(point, scale, seed).mul(Signed::toSigned(2)));
@@ -127,17 +127,17 @@ fn compute_perlin(point: Coords, scale: u124, seed: Field) -> Signed {
     perlin = perlin.add(single_scale_perlin(point, scale*8, seed));
     perlin = perlin.div(Signed::toSigned(4));
     perlin = perlin.muli(PERLIN_MAX/2).add(Signed::toSigned(PERLIN_MAX/2));
-    perlin
+    perlin.absi()
 }
 
 #[test]
 fn test_random() {
-    let perl1 = compute_perlin(Coords {x: Signed::toSigned(145), y: Signed::toSigned(10)}, 128, 10).x;
+    let perl1 = compute_perlin(Coords {x: Signed::toSigned(145), y: Signed::toSigned(10)}, 128, 10);
     std::println(perl1);
 
-    let perl2 = compute_perlin(Coords {x: Signed::toSigned(146), y: Signed::toSigned(20)}, 128, 10).x;
+    let perl2 = compute_perlin(Coords {x: Signed::toSigned(146), y: Signed::toSigned(20)}, 128, 10);
     std::println(perl2);
 
-    let perl3 = compute_perlin(Coords {x: Signed::toSigned(147), y: Signed::toSigned(20)}, 128, 10).x;
+    let perl3 = compute_perlin(Coords {x: Signed::toSigned(147), y: Signed::toSigned(20)}, 128, 10);
     std::println(perl3);
 }
